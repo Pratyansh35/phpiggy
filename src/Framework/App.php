@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Framework;
 
@@ -9,21 +9,25 @@ class App
     private readonly Router $router;
     private readonly Container $container;
 
-    public function __construct(string $container_definitions_path = null)
+    public function __construct(string $containerDefinitionsPath = null)
     {
         $this->router = new Router();
         $this->container = new Container();
 
-        if ($container_definitions_path) {
-            $container_definitions_path = include $container_definitions_path;
-            $this->container->addDefinitions($container_definitions_path);
+        if ($containerDefinitionsPath && file_exists($containerDefinitionsPath)) {
+            $definitions = include $containerDefinitionsPath;
+            if (is_array($definitions)) {
+                $this->container->addDefinitions($definitions);
+            } else {
+                throw new \Exception("Container definitions file must return an array");
+            }
         }
     }
 
     public function run(): void
     {
-        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        $method = $_SERVER['REQUEST_METHOD'];
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
         $this->router->dispatch($path, $method, $this->container);
     }
@@ -36,21 +40,18 @@ class App
     public function get(string $path, array $controller): self
     {
         $this->router->add('GET', $path, $controller);
-
         return $this;
     }
 
     public function post(string $path, array $controller): self
     {
         $this->router->add('POST', $path, $controller);
-
         return $this;
     }
 
     public function delete(string $path, array $controller): self
     {
         $this->router->add('DELETE', $path, $controller);
-
         return $this;
     }
 
