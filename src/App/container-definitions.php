@@ -16,11 +16,11 @@ use App\Services\{
 return [
     ValidatorService::class => fn () => new ValidatorService(),
     TemplateEngine::class => fn () => new TemplateEngine(Paths::VIEW),
-    Database::class => fn () => new Database('mysql', [
-    'host' => 'localhost',
-    'port' => 3306,
-    'dbname' => 'phpiggy',
-], 'root', ''),
+    Database::class => fn () => new Database($_ENV['DB_DRIVER'], [
+        'host' => $_ENV['DB_HOST'],
+        'port' => $_ENV['DB_PORT'],
+        'dbname' => $_ENV['DB_NAME'],
+    ], $_ENV['DB_USER'], $_ENV['DB_PASS']),
     UserService::class => fn(Container $container) => new UserService($container->get(Database::class)),
     TransactionService::class => fn(Container $container) => new TransactionService($container->get(Database::class)),
     ReceiptService::class => fn(Container $container) => new ReceiptService($container->get(Database::class))
