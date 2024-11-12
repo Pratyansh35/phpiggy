@@ -14,12 +14,22 @@ class App
         $this->router = new Router();
         $this->container = new Container();
 
+       
         if ($containerDefinitionsPath && file_exists($containerDefinitionsPath)) {
             $definitions = include $containerDefinitionsPath;
             if (is_array($definitions)) {
                 $this->container->addDefinitions($definitions);
             } else {
                 throw new \Exception("Container definitions file must return an array");
+            }
+
+            
+            try {
+                $templateEngine = $this->container->get(TemplateEngine::class);
+                var_dump($templateEngine); 
+            } catch (\Exception $e) {
+                
+                echo "Error: " . $e->getMessage();
             }
         }
     }
