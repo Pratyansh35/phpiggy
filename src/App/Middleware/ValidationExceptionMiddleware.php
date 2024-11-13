@@ -9,24 +9,24 @@ use Framework\Exceptions\ValidationException;
 
 class ValidationExceptionMiddleware implements MiddlewareInterface
 {
+  public function process(callable $next)
+  {
+    try {
+      $next();
+    } catch (ValidationException $e) {
+      $oldFormData = $_POST;
 
-    public function process(callable $next)
-    {
-        try {
-            $next();
-        } catch (ValidationException $e) {
-            $old_form_data = $_POST;
-            $excluded_fields = ['password', 'confirm'];
-            $formatted_form_data = array_diff_key(
-                $old_form_data,
-                array_flip($excluded_fields)
-            );
+      $excludedFields = ['password', 'confirmPassword'];
+      $formattedFormData = array_diff_key(
+        $oldFormData,
+        array_flip($excludedFields)
+      );
 
-            $_SESSION['errors'] = $e->errors;
-            $_SESSION['old_form_data'] = $formatted_form_data;
+      $_SESSION['errors'] = $e->errors;
+      $_SESSION['oldFormData'] = $formattedFormData;
 
-            $referer = $_SERVER['HTTP_REFERER'];
-            redirectTo($referer);
-        }
+      $referer = $_SERVER['HTTP_REFERER'];
+      redirectTo($referer);
     }
+  }
 }

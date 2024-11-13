@@ -8,94 +8,105 @@ use Framework\Database;
 
 class TransactionService
 {
-    public function __construct(
-        private readonly Database $db,
-    )
-    {}
+  public function __construct(private Database $db)
+  {
+  }
 
-    public function create(array $form_data): void
-    {
-        $this->db->query(
-    "INSERT INTO transactions(user_id, description, amount, date) VALUES(:user_id, :description, :amount, :date)",
-          [
-              'user_id' => $_SESSION['user'],
-              'description' => $form_data['description'],
-              'amount' => $form_data['amount'],
-              'date' => "{$form_data['date']} 00:00:00",
-          ]
-        );
-    }
+  public function create(array $formData)
+  {
+    $formattedDate = "{$formData['date']} 00:00:00";
 
-    public function getUserTransactions(int $length, int $offset): bool | array
-    {
-        $search = addcslashes($_GET['s'] ?? '', '%_');
-        $params =  [
-            'user_id' => $_SESSION['user'],
-            'description' => "%$search%",
-        ];
+    $this->db->query(
+      "INSERT INTO transactions(user_id, description, amount, date)
+      VALUES(:user_id, :description, :amount, :date)",
+      [
+        'user_id' => $_SESSION['user'],
+        'description' => $formData['description'],
+        'amount' => $formData['amount'],
+        'date' => $formattedDate
+      ]
+    );
+  }
 
-        $transactions = $this->db->query(
-            "SELECT *, DATE_FORMAT(date, '%Y-%m-%d') as formatted_date 
-                    FROM transactions 
-                    WHERE user_id = :user_id 
-                    AND description LIKE :description
-                    LIMIT {$length} OFFSET {$offset}",
-            $params
-        )->findAll();
+  public function getUserTransactions(int $length, int $offset)
+  {
+    $searchTerm = addcslashes($_GET['s'] ?? '', '%_');
+    $params = [
+      'user_id' => $_SESSION['user'],
+      'description' => "%{$searchTerm}%"
+    ];
 
-        $transactions = array_map(function (array $transaction) {
-            $transaction['receipts'] = $this->db->query(
-                "SELECT * FROM receipts WHERE transaction_id = :transaction_id",
-                ['transaction_id' => $transaction['id']]
-            )->findAll();
+    $transactions = $this->db->query(
+      "SELECT *, DATE_FORMAT(date, '%Y-%m-%d') as formatted_date
+      FROM transactions 
+      WHERE user_id = :user_id
+      AND description LIKE :description
+      LIMIT {$length} OFFSET {$offset}",
+      $params
+    )->findAll();
 
-            return $transaction;
-        }, $transactions);
+    $transactions = array_map(function (array $transaction) {
+      $transaction['receipts'] = $this->db->query(
+        "SELECT * FROM receipts WHERE transaction_id = :transaction_id",
+        ['transaction_id' => $transaction['id']]
+      )->findAll();
 
-        $transactions_count = $this->db->query(
-            "SELECT COUNT(*) FROM transactions  WHERE user_id = :user_id AND description LIKE :description",
-                $params
-        )->count();
+      return $transaction;
+    }, $transactions);
 
-        return [
-            $transactions,
-            $transactions_count
-        ];
-    }
+    $transactionCount = $this->db->query(
+      "SELECT COUNT(*)
+      FROM transactions 
+      WHERE user_id = :user_id
+      AND description LIKE :description",
+      $params
+    )->count();
 
-    public function getUserTransaction(string $id)
-    {
-        return $this->db->query(
-            "SELECT *, DATE_FORMAT(date, '%Y-%m-%d') as formatted_date FROM transactions WHERE id = :id AND user_id = :user_id",
-            [
-                'id' => $id,
-                'user_id' => $_SESSION['user'],
-            ]
-        )->find();
-    }
+    return [$transactions, $transactionCount];
+  }
 
-    public function update(array $form_data, int $id): void
-    {
-        $this->db->query(
-            "UPDATE transactions SET description = :description, amount = :amount, date = :date WHERE id = :id AND user_id = :user_id",
-            [
-                'user_id' => $_SESSION['user'],
-                'id' => $id,
-                'description' => $form_data['description'],
-                'amount' => $form_data['amount'],
-                'date' => "{$form_data['date']} 00:00:00",
-            ]
-        );
-    }
+  public function getUserTransaction(string $id)
+  {
+    return $this->db->query(
+      "SELECT *, DATE_FORMAT(date, '%Y-%m-%d') as formatted_date
+      FROM transactions 
+      WHERE id = :id AND user_id = :user_id",
+      [
+        'id' => $id,
+        'user_id' => $_SESSION['user']
+      ]
+    )->find();
+  }
 
-    public function delete(int $id): void
-    {
-        $this->db->query(
-            "DELETE FROM transactions WHERE id = :id AND user_id = :user_id",
-            [
-                'id' => $id,
-                'user_id' => $_SESSION['user'],
-            ]
-        );
-    }
+  public function update(array $formData, int $id)
+  {
+    $formattedDate = "{$formData['date']} 00:00:00";
+
+    $this->db->query(
+      "UPDATE transactions
+      SET description = :description,
+        amount = :amount,
+        date = :date
+      WHERE id = :id
+      AND user_id = :user_id",
+      [
+        'description' => $formData['description'],
+        'amount' => $formData['amount'],
+        'date' => $formattedDate,
+        'id' => $id,
+        'user_id' => $_SESSION['user']
+      ]
+    );
+  }
+
+  public function delete(int $id)
+  {
+    $this->db->query(
+      "DELETE FROM transactions WHERE id = :id AND user_id = :user_id",
+      [
+        'id' => $id,
+        'user_id' => $_SESSION['user']
+      ]
+    );
+  }
 }

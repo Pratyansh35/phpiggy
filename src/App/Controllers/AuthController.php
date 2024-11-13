@@ -4,55 +4,52 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Services\UserService;
-use App\Services\ValidatorService;
 use Framework\TemplateEngine;
+use App\Services\{ValidatorService, UserService};
 
 class AuthController
 {
-    public function __construct(
-        private readonly UserService $s_user,
-        private readonly TemplateEngine $view,
-        private readonly ValidatorService $s_validator,
-    )
-    {}
+  public function __construct(
+    private TemplateEngine $view,
+    private ValidatorService $validatorService,
+    private UserService $userService
+  ) {
+  }
 
-    public function loginForm(): void
-    {
-        echo $this->view->render("/login.php", [
-            'title' => 'Login'
-        ]);
-    }
+  public function registerView()
+  {
+    echo $this->view->render("register.php");
+  }
 
-    public function registerForm(): void
-    {
-        echo $this->view->render("/register.php", [
-            'title' => 'Register'
-        ]);
-    }
+  public function register()
+  {
+    $this->validatorService->validateRegister($_POST);
 
-    public function registerStore(): void
-    {
-        $this->s_validator->validateRegister($_POST);
-        $this->s_user->isEmailTaken($_POST['email']);
-        $this->s_user->create($_POST);
+    $this->userService->isEmailTaken($_POST['email']);
 
-        redirectTo('/');
-    }
+    $this->userService->create($_POST);
 
-    public function loginStore(): void
-    {
-        $this->s_validator->validateLogin($_POST);
+    redirectTo('/');
+  }
 
-        $this->s_user->login($_POST);
+  public function loginView()
+  {
+    echo $this->view->render("login.php");
+  }
 
-        redirectTo('/');
-    }
+  public function login()
+  {
+    $this->validatorService->validateLogin($_POST);
 
-    public function logout(): void
-    {
-        $this->s_user->logout();
+    $this->userService->login($_POST);
 
-        redirectTo('/');
-    }
+    redirectTo('/');
+  }
+
+  public function logout()
+  {
+    $this->userService->logout();
+
+    redirectTo('/login');
+  }
 }

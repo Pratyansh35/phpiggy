@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Exception;
+namespace App\Exceptions;
 
-class SessionException extends \RuntimeException
+use RuntimeException;
+
+class SessionException extends RuntimeException
 {
-
 }

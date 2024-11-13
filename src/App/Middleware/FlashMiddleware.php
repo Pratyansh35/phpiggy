@@ -9,20 +9,20 @@ use Framework\TemplateEngine;
 
 class FlashMiddleware implements MiddlewareInterface
 {
+  public function __construct(private TemplateEngine $view)
+  {
+  }
 
-    public function __construct(
-        private readonly TemplateEngine $view
-    )
-    {}
+  public function process(callable $next)
+  {
+    $this->view->addGlobal('errors', $_SESSION['errors'] ?? []);
 
-    public function process(callable $next)
-    {
-        $this->view->addGlobal('errors', $_SESSION['errors'] ?? []);
-        $this->view->addGlobal('old_form_data', $_SESSION['old_form_data'] ?? []);
+    unset($_SESSION['errors']);
 
-        unset($_SESSION['errors']);
-        unset($_SESSION['old_form_data']);
+    $this->view->addGlobal('oldFormData', $_SESSION['oldFormData'] ?? []);
 
-        $next();
-    }
+    unset($_SESSION['oldFormData']);
+
+    $next();
+  }
 }

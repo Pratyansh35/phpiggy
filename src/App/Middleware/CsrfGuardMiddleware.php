@@ -8,29 +8,22 @@ use Framework\Contracts\MiddlewareInterface;
 
 class CsrfGuardMiddleware implements MiddlewareInterface
 {
-    /**
-     * @throws \Exception
-     */
-    public function process(callable $next)
-    {
-        $request_method = strtoupper($_SERVER['REQUEST_METHOD']);
-        $valid_methods = [
-            'POST',
-            'PATCH',
-            'DELETE',
-        ];
+  public function process(callable $next)
+  {
+    $requestMethod = strtoupper($_SERVER['REQUEST_METHOD']);
+    $validMethods = ['POST', 'PATCH', 'DELETE'];
 
-        if (!in_array($request_method, $valid_methods)) {
-            $next();
-            return;
-        }
-
-        if ($_SESSION['token'] !== $_POST['token']) {
-            redirectTo('/');
-        }
-
-        unset($_SESSION['token']);
-
-        $next();
+    if (!in_array($requestMethod, $validMethods)) {
+      $next();
+      return;
     }
+
+    if ($_SESSION['token'] !== $_POST['token']) {
+      redirectTo('/');
+    }
+
+    unset($_SESSION['token']);
+
+    $next();
+  }
 }

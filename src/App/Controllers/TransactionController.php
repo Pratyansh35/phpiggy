@@ -4,67 +4,68 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Services\{ValidatorService, TransactionService};
 use Framework\TemplateEngine;
+use App\Services\{ValidatorService, TransactionService};
 
 class TransactionController
 {
-    public function __construct(
-        private readonly TemplateEngine $view,
-        private readonly ValidatorService $s_validator,
-        private readonly TransactionService $s_transaction,
-    )
-    {}
+  public function __construct(
+    private TemplateEngine $view,
+    private ValidatorService $validatorService,
+    private TransactionService $transactionService
+  ) {
+  }
 
-    public function createView(): void
-    {
-        echo $this->view->render("transactions/create.php", [
-            'title' => 'Create Transaction'
-        ]);
+  public function createView()
+  {
+    echo $this->view->render("transactions/create.php");
+  }
+
+  public function create()
+  {
+    $this->validatorService->validateTransaction($_POST);
+
+    $this->transactionService->create($_POST);
+
+    redirectTo('/');
+  }
+
+  public function editView(array $params)
+  {
+    $transaction = $this->transactionService->getUserTransaction(
+      $params['transaction']
+    );
+
+    if (!$transaction) {
+      redirectTo('/');
     }
 
-    public function createStore(): void
-    {
-        $this->s_validator->validateTransaction($_POST);
+    echo $this->view->render('transactions/edit.php', [
+      'transaction' => $transaction
+    ]);
+  }
 
-        $this->s_transaction->create($_POST);
+  public function edit(array $params)
+  {
+    $transaction = $this->transactionService->getUserTransaction(
+      $params['transaction']
+    );
 
-        redirectTo('/');
+    if (!$transaction) {
+      redirectTo('/');
     }
 
-    public function editForm(array $params): void
-    {
-        $transaction = $this->s_transaction->getUserTransaction($params['transaction']);
+    $this->validatorService->validateTransaction($_POST);
 
-        if (!$transaction) {
-            redirectTo('/');
-        }
+    $this->transactionService->update($_POST, $transaction['id']);
 
-        echo $this->view->render("transactions/edit.php", [
-            'title' => 'Edit Transaction',
-            'transaction' => $transaction
-        ]);
-    }
+    redirectTo($_SERVER['HTTP_REFERER']);
+  }
 
-    public function editStore(array $params): void
-    {
-        $transaction = $this->s_transaction->getUserTransaction($params['transaction']);
+  public function delete(array $params)
+  {
+    $this->transactionService->delete((int) $params['transaction']);
 
-        if (!$transaction) {
-            redirectTo('/');
-        }
-
-        $this->s_validator->validateTransaction($_POST);
-
-        $this->s_transaction->update($_POST, $transaction['id']);
-
-        redirectTo('/');
-    }
-
-    public function delete(array $params): void
-    {
-        $this->s_transaction->delete((int) $params['transaction']);
-
-        redirectTo('/');
-    }
+    redirectTo('/');
+  }
 }

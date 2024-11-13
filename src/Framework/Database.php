@@ -4,60 +4,58 @@ declare(strict_types=1);
 
 namespace Framework;
 
-use PDO;
-use PDOException;
-use PDOStatement;
+use PDO, PDOException, PDOStatement;
 
-final class Database
+class Database
 {
-    public readonly PDO $connection;
-    public PDOStatement $stmt;
+  private PDO $connection;
+  private PDOStatement $stmt;
 
-    public function __construct(
-        string $driver,
-        array $config,
-        string $username,
-        string $password,
-    )
-    {
-        $config = http_build_query(data: $config, arg_separator: ';');
+  public function __construct(
+    string $driver,
+    array $config,
+    string $username,
+    string $password
+  ) {
+    $config = http_build_query(data: $config, arg_separator: ';');
 
-        $dsn = "{$driver}:{$config}";
+    $dsn = "{$driver}:{$config}";
 
-        try {
-            $this->connection = new PDO($dsn, $username, $password, [
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]);
-        } catch (PDOException $e) {
-            die('Unable to connect to database.');
-        }
+    try {
+      $this->connection = new PDO($dsn, $username, $password, [
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+      ]);
+    } catch (PDOException $e) {
+      die("Unable to connect to database");
     }
+  }
 
-    public function query(string $query, array $params): self
-    {
-        $this->stmt = $this->connection->prepare($query);
-        $this->stmt->execute($params);
+  public function query(string $query, array $params = []): Database
+  {
+    $this->stmt = $this->connection->prepare($query);
 
-        return $this;
-    }
+    $this->stmt->execute($params);
 
-    public function count()
-    {
-        return $this->stmt->fetchColumn();
-    }
+    return $this;
+  }
 
-    public function find()
-    {
-        return $this->stmt->fetch();
-    }
+  public function count()
+  {
+    return $this->stmt->fetchColumn();
+  }
 
-    public function id(): bool | string
-    {
-        return $this->connection->lastInsertId();
-    }
+  public function find()
+  {
+    return $this->stmt->fetch();
+  }
 
-    public function findAll(): bool | array
-    {
-        return $this->stmt->fetchAll();
-    }
+  public function id()
+  {
+    return $this->connection->lastInsertId();
+  }
+
+  public function findAll()
+  {
+    return $this->stmt->fetchAll();
+  }
 }

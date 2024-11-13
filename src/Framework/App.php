@@ -6,72 +6,61 @@ namespace Framework;
 
 class App
 {
-    private readonly Router $router;
-    private readonly Container $container;
+  private Router $router;
+  private Container $container;
 
-    public function __construct(string $containerDefinitionsPath = null)
-    {
-        $this->router = new Router();
-        $this->container = new Container();
+  public function __construct(string $containerDefinitionsPath = null)
+  {
+    $this->router = new Router();
+    $this->container = new Container();
 
-       
-        if ($containerDefinitionsPath && file_exists($containerDefinitionsPath)) {
-            $definitions = include $containerDefinitionsPath;
-            if (is_array($definitions)) {
-                $this->container->addDefinitions($definitions);
-            } else {
-                throw new \Exception("Container definitions file must return an array");
-            }
-
-            
-            try {
-                $templateEngine = $this->container->get(TemplateEngine::class);
-                var_dump($templateEngine); 
-            } catch (\Exception $e) {
-                
-                echo "Error: " . $e->getMessage();
-            }
-        }
+    if ($containerDefinitionsPath) {
+      $containerDefinitions = include $containerDefinitionsPath;
+      $this->container->addDefinitions($containerDefinitions);
     }
+  }
 
-    public function run(): void
-    {
-        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+  public function run()
+  {
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $method = $_SERVER['REQUEST_METHOD'];
 
-        $this->router->dispatch($path, $method, $this->container);
-    }
+    $this->router->dispatch($path, $method, $this->container);
+  }
 
-    public function addMiddleware(string $middleware): void
-    {
-        $this->router->addMiddleware($middleware);
-    }
+  public function get(string $path, array $controller): App
+  {
+    $this->router->add('GET', $path, $controller);
 
-    public function get(string $path, array $controller): self
-    {
-        $this->router->add('GET', $path, $controller);
-        return $this;
-    }
+    return $this;
+  }
 
-    public function post(string $path, array $controller): self
-    {
-        $this->router->add('POST', $path, $controller);
-        return $this;
-    }
+  public function post(string $path, array $controller): App
+  {
+    $this->router->add('POST', $path, $controller);
 
-    public function delete(string $path, array $controller): self
-    {
-        $this->router->add('DELETE', $path, $controller);
-        return $this;
-    }
+    return $this;
+  }
 
-    public function middleware(string $middleware): void
-    {
-        $this->router->addRouteMiddleware($middleware);
-    }
+  public function delete(string $path, array $controller): App
+  {
+    $this->router->add('DELETE', $path, $controller);
 
-    public function setErrorHandler(array $controller): void
-    {
-        $this->router->setErrorHandler($controller);
-    }
+    return $this;
+  }
+
+  public function addMiddleware(string $middleware)
+  {
+    $this->router->addMiddleware($middleware);
+  }
+
+  public function add(string $middleware)
+  {
+    $this->router->addRouteMiddleware($middleware);
+  }
+
+  public function setErrorHandler(array $controller)
+  {
+    $this->router->setErrorHandler($controller);
+  }
 }
